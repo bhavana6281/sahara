@@ -502,7 +502,7 @@ button:focus-visible, a:focus-visible, [tabindex]:focus-visible {
   top: 0;
   right: 0;
   height: 100%;
-  width: min(420px, 92vw);
+  width: min(480px, 94vw);
   background: var(--surface);
   box-shadow: -4px 0 24px rgba(16, 24, 32, 0.18);
   z-index: 50;
@@ -547,8 +547,43 @@ button:focus-visible, a:focus-visible, [tabindex]:focus-visible {
   margin-bottom: 1.2rem;
 }
 
+.architecture-subhead {
+  margin: 1.2rem 0 0.6rem;
+  font-size: 0.8rem;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.tech-chip-row { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+.tech-chip {
+  background: #eef4fb;
+  color: var(--accent-dark);
+  border-radius: var(--radius-pill);
+  padding: 0.25rem 0.65rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.architecture-steps {
+  margin: 0;
+  padding-left: 1.3rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+.architecture-steps li { font-size: 0.82rem; line-height: 1.45; color: var(--text); }
+.architecture-steps code {
+  background: #f0f2f5;
+  padding: 0.05rem 0.3rem;
+  border-radius: 3px;
+  font-size: 0.78rem;
+}
+.architecture-steps em { color: var(--muted); font-style: normal; font-weight: 600; }
+
 .architecture-stats h3 {
-  margin: 0 0 0.6rem;
+  margin: 1.2rem 0 0.6rem;
   font-size: 0.8rem;
   color: var(--muted);
   text-transform: uppercase;

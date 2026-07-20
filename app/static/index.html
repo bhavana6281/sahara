@@ -25,10 +25,11 @@
       <h2>How Sahara Works</h2>
       <button type="button" id="architecture-close" class="architecture-close" aria-label="Close">&times;</button>
     </div>
+
     <div class="architecture-flow">
       <div class="architecture-layer layer-experience">
         <strong>Experience Layer</strong>
-        <span>Planner picks a capability + region, or asks in plain English</span>
+        <span>Databricks App &mdash; FastAPI backend, static vanilla-JS frontend, Leaflet maps. No build step.</span>
       </div>
       <div class="architecture-arrow">&darr;</div>
       <div class="architecture-layer layer-intelligence">
@@ -38,13 +39,50 @@
       <div class="architecture-arrow">&darr;</div>
       <div class="architecture-layer layer-data">
         <strong>Data Layer</strong>
-        <span>Delta tables in Unity Catalog &mdash; precomputed, deterministic</span>
+        <span>Delta Lake tables in Unity Catalog &mdash; precomputed, deterministic</span>
       </div>
     </div>
+
     <div class="architecture-principle">
       Trust score is computed <strong>once, deterministically, in Spark</strong> &mdash; never
       judged by an LLM at request time. The LLM only translates questions and phrases summaries.
     </div>
+
+    <h3 class="architecture-subhead">Tech stack</h3>
+    <div class="tech-chip-row">
+      <span class="tech-chip">PySpark</span>
+      <span class="tech-chip">Delta Lake</span>
+      <span class="tech-chip">Unity Catalog</span>
+      <span class="tech-chip">Databricks SQL Warehouse</span>
+      <span class="tech-chip">Databricks Apps</span>
+      <span class="tech-chip">Databricks Model Serving</span>
+      <span class="tech-chip">Llama 4 Maverick</span>
+      <span class="tech-chip">Databricks Secrets</span>
+      <span class="tech-chip">FastAPI</span>
+      <span class="tech-chip">Leaflet</span>
+      <span class="tech-chip">Vanilla JS</span>
+    </div>
+
+    <h3 class="architecture-subhead">Process flow &mdash; Facility Trust Desk</h3>
+    <ol class="architecture-steps">
+      <li>Planner picks a capability + region, or types a plain-English question</li>
+      <li><em>NL path:</em> LLM (Llama 4 Maverick) emits a small validated JSON filter &mdash;
+        capability/state/district/trust level &mdash; never SQL; unrecognized values are
+        dropped to null, never guessed</li>
+      <li><em>NL path, LLM unavailable:</em> zero-LLM keyword fallback over the same
+        allowlists &mdash; NL search still returns results, never a hard failure</li>
+      <li>SQL Warehouse runs a parameterized query over <code>facility_trust</code>
+        (capability match + state/district, including spelling-variant and
+        pincode-recovered matches)</li>
+      <li>Results ranked by trust_score, split into High/Medium/Low confidence tabs</li>
+      <li><em>NL path:</em> LLM writes a 2&ndash;3 sentence summary over the
+        already-finalized results &mdash; cosmetic only, cannot change what was returned</li>
+      <li>Planner expands a facility &rarr; cited contradictions + full capability evidence
+        (all precomputed, just looked up)</li>
+      <li>Planner note/override &rarr; written to <code>planner_actions</code>, persists across
+        sessions and deployments</li>
+    </ol>
+
     <div class="architecture-stats" id="architecture-stats">
       <div class="detail-loading"><span class="spinner"></span>Loading live status…</div>
     </div>
