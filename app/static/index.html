@@ -1,0 +1,205 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Sahara — Healthcare Facility Intelligence</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+  <header class="app-header">
+    <div>
+      <h1>Sahara</h1>
+      <p class="subtitle">Evidence-cited healthcare facility intelligence for planners</p>
+    </div>
+    <div class="app-header-right">
+      <button type="button" id="architecture-toggle" class="btn-secondary" aria-expanded="false" aria-controls="architecture-panel">How Sahara Works</button>
+      <div id="mode-banner" class="mode-banner" role="status">checking data source…</div>
+    </div>
+  </header>
+
+  <div id="architecture-backdrop" class="architecture-backdrop hidden"></div>
+  <aside id="architecture-panel" class="architecture-panel hidden" aria-hidden="true" aria-label="How Sahara works">
+    <div class="architecture-panel-header">
+      <h2>How Sahara Works</h2>
+      <button type="button" id="architecture-close" class="architecture-close" aria-label="Close">&times;</button>
+    </div>
+    <div class="architecture-flow">
+      <div class="architecture-layer layer-experience">
+        <strong>Experience Layer</strong>
+        <span>Planner picks a capability + region, or asks in plain English</span>
+      </div>
+      <div class="architecture-arrow">&darr;</div>
+      <div class="architecture-layer layer-intelligence">
+        <strong>Intelligence Layer</strong>
+        <span id="arch-llm-line">NL query &rarr; LLM emits a validated filter (never SQL) &middot; trust is only ever looked up</span>
+      </div>
+      <div class="architecture-arrow">&darr;</div>
+      <div class="architecture-layer layer-data">
+        <strong>Data Layer</strong>
+        <span>Delta tables in Unity Catalog &mdash; precomputed, deterministic</span>
+      </div>
+    </div>
+    <div class="architecture-principle">
+      Trust score is computed <strong>once, deterministically, in Spark</strong> &mdash; never
+      judged by an LLM at request time. The LLM only translates questions and phrases summaries.
+    </div>
+    <div class="architecture-stats" id="architecture-stats">
+      <div class="detail-loading"><span class="spinner"></span>Loading live status…</div>
+    </div>
+  </aside>
+
+  <nav class="app-tabs" id="app-tabs" role="tablist" aria-label="Sahara views">
+    <button type="button" data-view="trust" class="active" role="tab"
+            aria-selected="true" aria-controls="view-trust" id="tab-trust">Facility Trust Desk</button>
+    <button type="button" data-view="desert" role="tab"
+            aria-selected="false" aria-controls="view-desert" id="tab-desert">Medical Desert Planner</button>
+    <button type="button" data-view="readiness" role="tab"
+            aria-selected="false" aria-controls="view-readiness" id="tab-readiness">Data Readiness Desk</button>
+  </nav>
+
+  <!-- ===================== VIEW 1: Facility Trust Desk ===================== -->
+  <section class="view-section" id="view-trust" data-view="trust"
+            role="tabpanel" aria-labelledby="tab-trust">
+    <section class="picker">
+      <label>
+        Capability
+        <select id="capability-select"><option value="">Loading…</option></select>
+      </label>
+      <label>
+        State
+        <select id="state-select"><option value="">Loading…</option></select>
+      </label>
+      <label>
+        District <span class="optional">(optional)</span>
+        <select id="district-select"><option value="">Any district</option></select>
+      </label>
+      <button id="search-btn" class="btn-primary" disabled>Search</button>
+    </section>
+
+    <section class="nl-query">
+      <form id="nl-query-form">
+        <label for="nl-query-input">Or ask in plain English</label>
+        <div class="nl-query-row">
+          <input type="text" id="nl-query-input" maxlength="500"
+                 placeholder="e.g. High-trust ICU facilities in Bihar" />
+          <button type="submit" class="btn-primary">Ask</button>
+        </div>
+      </form>
+      <div id="nl-query-status" class="nl-query-status hidden"></div>
+    </section>
+
+    <div id="error-banner" class="error-banner hidden" role="alert"></div>
+
+    <main class="results">
+      <section class="results-list" id="results-list">
+        <p class="empty-hint">Pick a capability and state, then Search.</p>
+      </section>
+      <section class="results-map">
+        <div id="map"></div>
+      </section>
+    </main>
+  </section>
+
+  <!-- ===================== VIEW 2: Medical Desert Planner ===================== -->
+  <section class="view-section hidden" id="view-desert" data-view="desert"
+            role="tabpanel" aria-labelledby="tab-desert">
+    <section class="picker">
+      <label>
+        Capability
+        <select id="desert-capability-select"><option value="">Loading…</option></select>
+      </label>
+      <label>
+        State <span class="optional">(optional)</span>
+        <select id="desert-state-select"><option value="">All states</option></select>
+      </label>
+      <button id="desert-search-btn" class="btn-primary" disabled>Show map</button>
+    </section>
+
+    <div class="desert-legend">
+      <span class="swatch-row"><span class="swatch covered"></span> Covered — capability confirmed present</span>
+      <span class="swatch-row"><span class="swatch medical_desert"></span> Medical desert — confirmed absent</span>
+      <span class="swatch-row"><span class="swatch data_desert"></span> Data desert — unknown, not confirmed absent</span>
+      <span class="caveat">Marker position is an approximate district centroid (average facility location), not a precise boundary.</span>
+    </div>
+
+    <div id="desert-error-banner" class="error-banner hidden" role="alert"></div>
+    <p class="desert-count" id="desert-count">Pick a capability, then Show map.</p>
+    <div style="padding: 0 1.5rem 1.5rem;">
+      <div id="desert-map"></div>
+    </div>
+  </section>
+
+  <!-- ===================== VIEW 3: Data Readiness Desk ===================== -->
+  <section class="view-section hidden" id="view-readiness" data-view="readiness"
+            role="tabpanel" aria-labelledby="tab-readiness">
+    <div class="readiness-summary" id="readiness-summary" aria-live="polite"></div>
+
+    <section class="picker">
+      <label>
+        Filter
+        <select id="readiness-filter-select">
+          <option value="all">All records</option>
+          <option value="unreviewed">Unreviewed only</option>
+        </select>
+      </label>
+      <label>
+        Sort by
+        <select id="readiness-sort-select">
+          <option value="leverage_score-desc">Leverage (highest first)</option>
+          <option value="trust_score-asc">Trust score (lowest first)</option>
+          <option value="name-asc">Name (A&ndash;Z)</option>
+        </select>
+      </label>
+      <button id="readiness-refresh-btn" class="btn-primary">Refresh queue</button>
+    </section>
+
+    <div id="readiness-error-banner" class="error-banner hidden" role="alert"></div>
+    <p class="desert-count" id="readiness-count">Loading queue…</p>
+
+    <div style="padding: 0 1.5rem 1.5rem; overflow-x: auto;">
+      <table class="readiness-table" id="readiness-table">
+        <thead>
+          <tr>
+            <th data-sort="name">Facility</th>
+            <th data-sort="district">District</th>
+            <th data-sort="trust_score">Trust</th>
+            <th>Why flagged</th>
+            <th data-sort="leverage_score">Leverage</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody id="readiness-tbody"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <template id="facility-card-template">
+    <article class="facility-card">
+      <header class="facility-card-header">
+        <div>
+          <h3 class="facility-name"></h3>
+          <p class="facility-location"></p>
+        </div>
+        <span class="trust-pill"></span>
+      </header>
+      <p class="facility-explanation"></p>
+      <button class="expand-toggle" type="button" aria-expanded="false">Expand — evidence &amp; notes</button>
+      <div class="facility-detail hidden">
+        <div class="detail-loading"><span class="spinner"></span>Loading detail…</div>
+      </div>
+    </article>
+  </template>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/map.js"></script>
+  <script src="js/desertMap.js"></script>
+  <script src="js/desertApp.js"></script>
+  <script src="js/readiness.js"></script>
+  <script src="js/architecture.js"></script>
+  <script src="js/tabs.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

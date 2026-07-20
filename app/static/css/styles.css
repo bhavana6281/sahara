@@ -1,0 +1,580 @@
+/* ==========================================================================
+   Design tokens — colors validated with the dataviz color-formula method
+   (node scripts/validate_palette.js), not eyeballed. Two separate status
+   scales on purpose: trust (severity: good/warning/critical) and desert
+   coverage (identity: covered/absent/unknown) use different hue families so
+   the two legends are never visually confused.
+   ========================================================================== */
+:root {
+  /* trust level — status/severity scale */
+  --high: #0ca30c;
+  --medium: #fab219;
+  --medium-text: #1a1a19;   /* white-on-amber measures ~1.9:1, fails; use dark text */
+  --low: #d03b3b;
+
+  /* desert coverage — categorical/identity scale, deliberately distinct hues */
+  --covered: #1baf7a;
+  --medical-desert: #4a3aa7;
+  --data-desert: #2a78d6;
+
+  /* chrome */
+  --border: #d9dee3;
+  --bg: #f6f8fa;
+  --surface: #ffffff;
+  --text: #1c2733;
+  --muted: #5b6b7a;
+  --accent: #2a78d6;         /* unified with --data-desert: one blue, two roles */
+  --accent-dark: #184f95;
+
+  /* spacing / radius tokens */
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --radius-pill: 999px;
+  --shadow-sm: 0 1px 2px rgba(16, 24, 32, 0.05);
+  --shadow-md: 0 2px 8px rgba(16, 24, 32, 0.09);
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+}
+
+a { color: var(--accent); }
+
+/* ==========================================================================
+   Header — hero treatment for the Sahara brand
+   ========================================================================== */
+.app-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.1rem 1.5rem;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  box-shadow: var(--shadow-sm);
+}
+.app-header h1 {
+  margin: 0;
+  font-size: 1.6rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--accent-dark);
+}
+.subtitle { margin: 0.2rem 0 0; color: var(--muted); font-size: 0.9rem; }
+
+.app-header-right { display: flex; align-items: center; gap: 0.7rem; }
+.btn-secondary {
+  background: var(--surface);
+  border: 1px solid var(--accent);
+  color: var(--accent-dark);
+  padding: 0.4rem 0.85rem;
+  border-radius: var(--radius-md);
+  font-size: 0.83rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+.btn-secondary:hover { background: #eef4fb; }
+
+.mode-banner {
+  font-size: 0.8rem;
+  padding: 0.35rem 0.8rem;
+  border-radius: var(--radius-pill);
+  background: #eef2f6;
+  color: var(--muted);
+  white-space: nowrap;
+}
+.mode-banner.connected { background: #e6f4ea; color: var(--high); }
+.mode-banner.error { background: #fff4e5; color: #8a5300; }
+
+/* ==========================================================================
+   Tab navigation (Trust Desk / Medical Desert Planner / Data Readiness Desk)
+   ========================================================================== */
+.app-tabs {
+  display: flex;
+  gap: 0.25rem;
+  padding: 0 1.5rem;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+}
+.app-tabs button {
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  padding: 0.75rem 0.9rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--muted);
+  cursor: pointer;
+  transition: color 0.15s ease, border-color 0.15s ease;
+}
+.app-tabs button:hover { color: var(--text); }
+.app-tabs button.active { color: var(--accent-dark); border-bottom-color: var(--accent); }
+.view-section.hidden { display: none !important; }
+
+/* ==========================================================================
+   Picker + NL query
+   ========================================================================== */
+.picker {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  padding: 1rem 1.5rem;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  box-shadow: var(--shadow-sm);
+}
+.picker label {
+  display: flex;
+  flex-direction: column;
+  font-size: 0.8rem;
+  color: var(--muted);
+  gap: 0.3rem;
+}
+.picker select {
+  padding: 0.45rem 0.6rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  min-width: 180px;
+  font-size: 0.9rem;
+}
+.optional { font-weight: normal; opacity: 0.7; }
+
+.btn-primary {
+  padding: 0.55rem 1.4rem;
+  background: var(--accent);
+  color: white;
+  border: none;
+  border-radius: var(--radius-md);
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+.btn-primary:hover:not(:disabled) { background: var(--accent-dark); }
+.btn-primary:disabled { background: #a9b7c4; cursor: not-allowed; }
+
+.picker select:focus, .picker input:focus, .note-form input:focus,
+.note-form select:focus, .note-form textarea:focus, #nl-query-input:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+/* Visible keyboard focus on every interactive control — not just form
+   fields — for keyboard and screen-reader users. */
+button:focus-visible, a:focus-visible, [tabindex]:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spinner { animation: none; border-top-color: var(--border); }
+  .facility-card, .expand-toggle, .btn-primary, .confidence-tab { transition: none; }
+}
+
+.nl-query {
+  padding: 0 1.5rem 1rem;
+  background: var(--surface);
+}
+.nl-query label { font-size: 0.8rem; color: var(--muted); }
+.nl-query-row { display: flex; gap: 0.5rem; margin-top: 0.3rem; }
+.nl-query-row input {
+  flex: 1;
+  padding: 0.5rem 0.7rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  font-size: 0.9rem;
+}
+.nl-query-status { margin: 0.6rem 1.5rem 0; font-size: 0.85rem; color: var(--muted); }
+.nl-warnings { margin: 0.3rem 0; padding-left: 1.2rem; color: #8a5300; }
+.nl-summary { font-style: italic; }
+
+.error-banner {
+  margin: 1rem 1.5rem 0;
+  padding: 0.7rem 1rem;
+  background: #fdecea;
+  color: #a1291e;
+  border: 1px solid #f5c6c1;
+  border-radius: var(--radius-md);
+  font-size: 0.9rem;
+}
+.hidden { display: none !important; }
+
+/* ==========================================================================
+   Results — Trust Desk
+   ========================================================================== */
+.results {
+  display: grid;
+  grid-template-columns: minmax(320px, 1fr) minmax(320px, 1fr);
+  gap: 1rem;
+  padding: 1rem 1.5rem;
+  align-items: start;
+}
+.results-list { display: flex; flex-direction: column; gap: 1rem; }
+
+/* Confidence sub-tabs (High/Medium/Low) inside the results panel — splits a
+   search into tiers instead of one long mixed list. */
+.confidence-tabs { display: flex; gap: 0.5rem; }
+.confidence-tab {
+  border: 1px solid var(--border);
+  background: var(--surface);
+  border-radius: var(--radius-pill);
+  padding: 0.35rem 0.9rem;
+  font-size: 0.83rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+.confidence-tab:disabled { opacity: 0.4; cursor: not-allowed; }
+.confidence-tab.High.active { background: var(--high); border-color: var(--high); color: white; }
+.confidence-tab.Medium.active { background: var(--medium); border-color: var(--medium); color: var(--medium-text); }
+.confidence-tab.Low.active { background: var(--low); border-color: var(--low); color: white; }
+.confidence-panel { display: flex; flex-direction: column; gap: 1rem; }
+
+.empty-state {
+  padding: 1.2rem 1.4rem;
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-lg);
+  color: var(--muted);
+  background: var(--surface);
+  line-height: 1.5;
+}
+.empty-hint { color: var(--muted); }
+
+.results-map { position: sticky; top: 1rem; }
+#map, #desert-map { height: 480px; border-radius: var(--radius-lg); border: 1px solid var(--border); }
+
+.facility-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 1rem 1.25rem;
+  box-shadow: var(--shadow-sm);
+  transition: box-shadow 0.15s ease;
+}
+.facility-card:hover { box-shadow: var(--shadow-md); }
+.facility-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 0.5rem;
+}
+.facility-name { margin: 0; font-size: 1.05rem; }
+.facility-location { margin: 0.15rem 0 0; color: var(--muted); font-size: 0.85rem; }
+
+/* ==========================================================================
+   Status pills — icon (Unicode glyph, not emoji) + label + color, never
+   color alone. Trust uses the severity scale; desert status uses the
+   categorical scale — visually distinct hue families on purpose.
+   ========================================================================== */
+.trust-pill, .status-badge {
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.25rem 0.65rem;
+  border-radius: var(--radius-pill);
+  white-space: nowrap;
+  color: white;
+}
+.trust-pill::before, .status-badge::before {
+  margin-right: 0.3em;
+  font-weight: 700;
+}
+.trust-pill.High { background: var(--high); }
+.trust-pill.High::before { content: "\2713"; }               /* check */
+.trust-pill.Medium { background: var(--medium); color: var(--medium-text); }
+.trust-pill.Medium::before { content: "!"; }
+.trust-pill.Low { background: var(--low); }
+.trust-pill.Low::before { content: "\2715"; }                 /* x */
+
+.status-badge.covered { background: var(--covered); }
+.status-badge.covered::before { content: "\2713"; }
+.status-badge.medical_desert { background: var(--medical-desert); }
+.status-badge.medical_desert::before { content: "\2715"; }
+.status-badge.data_desert { background: var(--data-desert); }
+.status-badge.data_desert::before { content: "?"; }
+
+.facility-explanation { font-size: 0.9rem; color: var(--text); margin: 0.6rem 0; line-height: 1.5; }
+
+.expand-toggle {
+  background: none;
+  border: 1px solid var(--accent);
+  color: var(--accent);
+  border-radius: var(--radius-md);
+  padding: 0.35rem 0.7rem;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+.expand-toggle:hover { background: var(--accent); color: white; }
+
+.facility-detail {
+  margin-top: 0.8rem;
+  padding-top: 0.8rem;
+  border-top: 1px dashed var(--border);
+}
+.detail-section h4 { margin: 0.8rem 0 0.3rem; font-size: 0.85rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.03em; }
+.detail-section p, .detail-section li { line-height: 1.5; }
+.detail-section ul { margin: 0.2rem 0; padding-left: 1.2rem; font-size: 0.87rem; }
+
+.contradiction {
+  margin: 0.4rem 0;
+  padding: 0.5rem 0.7rem;
+  background: #fff8f0;
+  border-left: 3px solid var(--medium);
+  border-radius: var(--radius-sm);
+}
+.contradiction .reason { font-weight: 600; font-size: 0.85rem; }
+.contradiction blockquote {
+  margin: 0.3rem 0 0;
+  font-size: 0.82rem;
+  font-style: italic;
+  color: var(--muted);
+  border-left: 2px solid var(--border);
+  padding-left: 0.6rem;
+}
+
+.caps-table { width: 100%; border-collapse: collapse; font-size: 0.8rem; margin-top: 0.3rem; }
+.caps-table th, .caps-table td { text-align: left; padding: 0.35rem 0.4rem; border-bottom: 1px solid #eef1f4; }
+.caps-table td.evidence { color: var(--muted); font-style: italic; }
+.status-present { color: var(--high); font-weight: 600; }
+.status-absent { color: var(--low); font-weight: 600; }
+.status-uncertain { color: #8a5300; font-weight: 600; }
+
+.actions-list { display: flex; flex-direction: column; gap: 0.5rem; margin: 0.4rem 0; }
+.action-item {
+  padding: 0.5rem 0.7rem;
+  background: #f5f7fa;
+  border-radius: var(--radius-md);
+  font-size: 0.83rem;
+}
+.action-item .meta { color: var(--muted); font-size: 0.75rem; }
+.override-badge {
+  display: inline-block;
+  margin-left: 0.4rem;
+  padding: 0.1rem 0.4rem;
+  border-radius: var(--radius-sm);
+  background: var(--accent);
+  color: white;
+  font-size: 0.7rem;
+}
+
+.note-form { display: flex; flex-direction: column; gap: 0.4rem; margin-top: 0.5rem; }
+.note-form input, .note-form select, .note-form textarea {
+  padding: 0.4rem 0.5rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  font-size: 0.85rem;
+  font-family: inherit;
+}
+.note-form-row { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+.note-form-row > * { flex: 1; min-width: 140px; }
+.note-form button {
+  align-self: flex-start;
+  padding: 0.4rem 0.9rem;
+  background: var(--accent);
+  color: white;
+  border: none;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  font-size: 0.85rem;
+  transition: background-color 0.15s ease;
+}
+.note-form button:hover { background: var(--accent-dark); }
+
+/* ==========================================================================
+   Loading spinner (CSS-only)
+   ========================================================================== */
+.spinner {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border: 2px solid var(--border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  margin-right: 0.5em;
+  vertical-align: -2px;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ==========================================================================
+   Medical Desert Planner
+   ========================================================================== */
+.desert-legend {
+  display: flex;
+  gap: 1.2rem;
+  flex-wrap: wrap;
+  padding: 0.8rem 1.5rem;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  font-size: 0.85rem;
+}
+.desert-legend .swatch-row { display: flex; align-items: center; gap: 0.4rem; }
+.desert-legend .swatch {
+  width: 14px; height: 14px; border-radius: 50%; display: inline-block;
+}
+.desert-legend .swatch.covered { background: var(--covered); }
+.desert-legend .swatch.medical_desert { background: var(--medical-desert); }
+.desert-legend .swatch.data_desert { background: var(--data-desert); }
+.desert-legend .caveat { color: var(--muted); font-style: italic; width: 100%; margin-top: 0.2rem; }
+.desert-count { padding: 0 1.5rem; color: var(--muted); font-size: 0.85rem; }
+
+/* ==========================================================================
+   Data Readiness Desk
+   ========================================================================== */
+.readiness-summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 1px;
+  background: var(--border);
+  border-bottom: 1px solid var(--border);
+}
+.stat-tile {
+  background: var(--surface);
+  padding: 1rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+.stat-value { font-size: 1.6rem; font-weight: 700; color: var(--accent-dark); }
+.stat-label { font-size: 0.8rem; color: var(--muted); }
+
+.decision-badge {
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 0.2rem 0.55rem;
+  border-radius: var(--radius-pill);
+  white-space: nowrap;
+  color: white;
+  display: inline-block;
+}
+.decision-badge.unreviewed { background: var(--muted); }
+.decision-badge.confirmed_issue { background: var(--low); }
+.decision-badge.looks_fine { background: var(--high); }
+.decision-badge.needs_field_check { background: var(--medium); color: var(--medium-text); }
+.decision-badge.corrected { background: var(--accent); }
+
+.readiness-row:hover { background: #f5f7fa; }
+.readiness-detail-row td { background: #fafbfc; padding: 1rem 1.25rem; }
+
+.readiness-queue {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 1rem;
+  margin: 1rem 1.5rem;
+  box-shadow: var(--shadow-sm);
+}
+.queue-header { display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 0.4rem; }
+.queue-header h3 { margin: 0; }
+.queue-header .hint { font-weight: normal; color: var(--muted); font-size: 0.85rem; }
+.queue-count { color: var(--muted); font-size: 0.85rem; }
+.queue-filters { display: flex; gap: 0.6rem; flex-wrap: wrap; margin: 0.6rem 0; }
+.queue-filters select {
+  padding: 0.35rem 0.5rem; border: 1px solid var(--border); border-radius: var(--radius-md); font-size: 0.85rem;
+}
+.readiness-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+.readiness-table th, .readiness-table td { text-align: left; padding: 0.45rem 0.4rem; border-bottom: 1px solid #eef1f4; }
+.pagination { display: flex; gap: 0.6rem; align-items: center; margin-top: 0.6rem; font-size: 0.85rem; color: var(--muted); }
+.pagination button {
+  padding: 0.25rem 0.6rem; border: 1px solid var(--border); border-radius: var(--radius-md);
+  background: var(--surface); cursor: pointer;
+}
+.pagination button:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* ==========================================================================
+   "How Sahara Works" — slide-in panel from the right, toggled from the header
+   ========================================================================== */
+.architecture-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(11, 20, 32, 0.35);
+  z-index: 40;
+  transition: opacity 0.2s ease;
+}
+.architecture-panel {
+  position: fixed;
+  top: 0;
+  right: 0;
+  height: 100%;
+  width: min(420px, 92vw);
+  background: var(--surface);
+  box-shadow: -4px 0 24px rgba(16, 24, 32, 0.18);
+  z-index: 50;
+  padding: 1.25rem 1.5rem;
+  overflow-y: auto;
+  transform: translateX(100%);
+  transition: transform 0.25s ease;
+}
+.architecture-panel.open { transform: translateX(0); }
+.architecture-panel-header { display: flex; justify-content: space-between; align-items: center; }
+.architecture-panel-header h2 { margin: 0; font-size: 1.15rem; color: var(--accent-dark); }
+.architecture-close {
+  background: none; border: none; font-size: 1.4rem; line-height: 1; cursor: pointer;
+  color: var(--muted); padding: 0.2rem 0.5rem;
+}
+.architecture-close:hover { color: var(--text); }
+
+.architecture-flow { margin: 1.2rem 0; display: flex; flex-direction: column; align-items: stretch; }
+.architecture-layer {
+  padding: 0.7rem 0.9rem;
+  border-radius: var(--radius-md);
+  border-left: 4px solid var(--accent);
+  background: #f5f8fc;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+.architecture-layer strong { font-size: 0.85rem; }
+.architecture-layer span { font-size: 0.8rem; color: var(--muted); line-height: 1.4; }
+.architecture-layer.layer-experience { border-left-color: var(--accent); }
+.architecture-layer.layer-intelligence { border-left-color: var(--medical-desert); background: #f7f5fc; }
+.architecture-layer.layer-data { border-left-color: var(--high); background: #f2faf3; }
+.architecture-arrow { text-align: center; color: var(--muted); font-size: 1rem; padding: 0.15rem 0; }
+
+.architecture-principle {
+  font-size: 0.83rem;
+  line-height: 1.5;
+  padding: 0.8rem 0.9rem;
+  background: #fff8f0;
+  border-radius: var(--radius-md);
+  border-left: 3px solid var(--medium);
+  margin-bottom: 1.2rem;
+}
+
+.architecture-stats h3 {
+  margin: 0 0 0.6rem;
+  font-size: 0.8rem;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+.arch-stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.7rem; }
+.arch-stat {
+  background: #f5f7fa;
+  border-radius: var(--radius-md);
+  padding: 0.6rem 0.7rem;
+  display: flex;
+  flex-direction: column;
+}
+.arch-stat-value { font-size: 1.25rem; font-weight: 700; color: var(--accent-dark); }
+.arch-stat-label { font-size: 0.72rem; color: var(--muted); }
+.arch-connection { font-size: 0.78rem; color: var(--muted); margin-top: 0.8rem; word-break: break-all; }
+
+/* ==========================================================================
+   Responsive
+   ========================================================================== */
+@media (max-width: 860px) {
+  .results { grid-template-columns: 1fr; }
+  .results-map { position: static; }
+}
+@media (max-width: 480px) {
+  .picker { flex-direction: column; align-items: stretch; }
+  .picker select { min-width: 0; width: 100%; }
+  .app-header { flex-direction: column; align-items: flex-start; gap: 0.5rem; }
+}

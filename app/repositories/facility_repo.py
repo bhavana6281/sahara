@@ -1,0 +1,13 @@
+from typing import Optional, Protocol
+
+
+class FacilityRepo(Protocol):
+    def list_capabilities(self) -> list[str]: ...
+
+    def list_regions(self) -> list[dict]: ...
+
+    def ranked_facilities(self, capability: str, state: str, district: Optional[str],
+                           limit: int = 20, min_trust_score: Optional[int] = None,
+                           trust_level: Optional[str] = None) -> list[dict]: ...
+
+    def facility_detail(self, unique_id: str) -> Optional[dict]: ...

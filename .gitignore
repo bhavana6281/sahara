@@ -1,0 +1,10 @@
+.env
+app/.env
+__pycache__/
+*.pyc
+.DS_Store
+.venv/
+app/.venv/
+.databricks/
+app/.databricks/
+.claude/

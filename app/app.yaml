@@ -1,0 +1,15 @@
+command: ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "$DATABRICKS_APP_PORT"]
+
+env:
+  - name: DATABRICKS_HOST
+    value: "https://dbc-14e1658b-cbd6.cloud.databricks.com"
+  - name: WAREHOUSE_ID
+    value: "3e37c84b8d031a14"
+  - name: LLM_BASE_URL
+    value: "https://dbc-14e1658b-cbd6.cloud.databricks.com/ai-gateway/mlflow/v1"
+  - name: LLM_ENDPOINT
+    value: "system.ai.llama-4-maverick"
+  - name: DATABRICKS_TOKEN
+    valueFrom: databricks-token
+  - name: LLM_TOKEN
+    valueFrom: llm-token
