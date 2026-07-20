@@ -56,4 +56,18 @@
   document.addEventListener("keydown", (e) => {
     if (e.key === "Escape" && panel.classList.contains("open")) close();
   });
+
+  // Toggle between each track's process flow — clicking swaps which <ol> is
+  // shown, so the diagram responds to the user rather than just animating.
+  const flowToggles = document.querySelectorAll(".flow-toggle");
+  const flowPanels = document.querySelectorAll(".flow-panel");
+  flowToggles.forEach((btn) => {
+    btn.addEventListener("click", () => {
+      flowToggles.forEach((b) => {
+        b.classList.toggle("active", b === btn);
+        b.setAttribute("aria-selected", String(b === btn));
+      });
+      flowPanels.forEach((p) => p.classList.toggle("hidden", p.dataset.flowPanel !== btn.dataset.flow));
+    });
+  });
 })();

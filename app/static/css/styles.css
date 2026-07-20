@@ -537,6 +537,63 @@ button:focus-visible, a:focus-visible, [tabindex]:focus-visible {
 .architecture-layer.layer-data { border-left-color: var(--high); background: #f2faf3; }
 .architecture-arrow { text-align: center; color: var(--muted); font-size: 1rem; padding: 0.15rem 0; }
 
+/* Dynamic flow — a pulse travels Experience → Intelligence → Data on a loop,
+   so the diagram reads as a live request moving through the system, not a
+   static snapshot. */
+.architecture-layer { position: relative; overflow: hidden; }
+.architecture-layer::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: var(--radius-md);
+  box-shadow: 0 0 0 0 rgba(42, 120, 214, 0);
+  animation: layer-pulse 3.6s ease-in-out infinite;
+  pointer-events: none;
+}
+.architecture-layer.layer-experience::after { animation-delay: 0s; }
+.architecture-layer.layer-intelligence::after { animation-delay: 1.2s; box-shadow: 0 0 0 0 rgba(74, 58, 167, 0); }
+.architecture-layer.layer-intelligence::after { animation-name: layer-pulse-intelligence; }
+.architecture-layer.layer-data::after { animation-delay: 2.4s; }
+.architecture-layer.layer-data::after { animation-name: layer-pulse-data; }
+
+@keyframes layer-pulse {
+  0%, 84%, 100% { box-shadow: 0 0 0 0 rgba(42, 120, 214, 0); }
+  8% { box-shadow: 0 0 0 3px rgba(42, 120, 214, 0.35); }
+}
+@keyframes layer-pulse-intelligence {
+  0%, 84%, 100% { box-shadow: 0 0 0 0 rgba(74, 58, 167, 0); }
+  8% { box-shadow: 0 0 0 3px rgba(74, 58, 167, 0.35); }
+}
+@keyframes layer-pulse-data {
+  0%, 84%, 100% { box-shadow: 0 0 0 0 rgba(12, 163, 12, 0); }
+  8% { box-shadow: 0 0 0 3px rgba(12, 163, 12, 0.35); }
+}
+
+.architecture-arrow { position: relative; }
+.architecture-arrow::before {
+  content: "";
+  position: absolute;
+  left: 50%; top: 0;
+  width: 6px; height: 6px;
+  margin-left: -3px;
+  border-radius: 50%;
+  background: var(--accent);
+  opacity: 0;
+  animation: arrow-flow 3.6s ease-in-out infinite;
+}
+.architecture-arrow:nth-of-type(1)::before { animation-delay: 0.3s; }
+.architecture-flow .architecture-arrow + .architecture-layer + .architecture-arrow::before { animation-delay: 1.5s; }
+
+@keyframes arrow-flow {
+  0%, 92%, 100% { opacity: 0; transform: translateY(0); }
+  4%, 8% { opacity: 1; }
+  10% { opacity: 0; transform: translateY(100%); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .architecture-layer::after, .architecture-arrow::before { animation: none !important; }
+}
+
 .architecture-principle {
   font-size: 0.83rem;
   line-height: 1.5;
@@ -565,6 +622,35 @@ button:focus-visible, a:focus-visible, [tabindex]:focus-visible {
   font-weight: 600;
   white-space: nowrap;
 }
+
+.tech-stack-table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
+.tech-stack-table th, .tech-stack-table td {
+  text-align: left;
+  padding: 0.45rem 0.5rem;
+  border-bottom: 1px solid #eef1f4;
+  vertical-align: top;
+}
+.tech-stack-table th { width: 38%; color: var(--muted); font-weight: 600; white-space: nowrap; }
+.tech-stack-table td { color: var(--text); line-height: 1.4; }
+
+.feature-list { margin: 0; padding-left: 1.2rem; display: flex; flex-direction: column; gap: 0.5rem; }
+.feature-list li { font-size: 0.83rem; line-height: 1.45; color: var(--text); }
+
+.flow-toggle-group { display: flex; gap: 0.4rem; flex-wrap: wrap; margin-bottom: 0.8rem; }
+.flow-toggle {
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--muted);
+  border-radius: var(--radius-pill);
+  padding: 0.3rem 0.75rem;
+  font-size: 0.76rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+.flow-toggle:hover { border-color: var(--accent); }
+.flow-toggle.active { background: var(--accent); border-color: var(--accent); color: white; }
+.flow-panel.hidden { display: none !important; }
 
 .architecture-steps {
   margin: 0;

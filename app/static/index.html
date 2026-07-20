@@ -26,6 +26,26 @@
       <button type="button" id="architecture-close" class="architecture-close" aria-label="Close">&times;</button>
     </div>
 
+    <h3 class="architecture-subhead">Key features</h3>
+    <ul class="feature-list">
+      <li><strong>Natural language queries</strong> &mdash; &ldquo;ICU facilities with high
+        trust in Bihar&rdquo; instead of hunting through dropdowns</li>
+      <li><strong>AI translates, never AI-judges</strong> &mdash; Llama 4 Maverick converts
+        your question into a validated filter object; it never writes SQL and never touches
+        the trust score</li>
+      <li><strong>Interactive map</strong> &mdash; Leaflet map color-coded by trust level
+        (Facility Trust Desk) or coverage status (Medical Desert Planner)</li>
+      <li><strong>Deterministic trust scoring</strong> &mdash; every capability claim (ICU,
+        surgery, oxygen&hellip;) is checked against contradiction rules in Spark, precomputed
+        and auditable, not judged live by an LLM</li>
+      <li><strong>Data desert vs. medical desert</strong> &mdash; the map never confuses
+        &ldquo;we don't know&rdquo; with &ldquo;confirmed absent care&rdquo;</li>
+      <li><strong>Leverage-scored review queue</strong> &mdash; ranks records by how much
+        fixing them would improve the whole dataset, not just by raw trust score</li>
+      <li><strong>Persisted decisions</strong> &mdash; planner notes/overrides and reviewer
+        decisions survive restarts and redeployments</li>
+    </ul>
+
     <div class="architecture-flow">
       <div class="architecture-layer layer-experience">
         <strong>Experience Layer</strong>
@@ -49,22 +69,28 @@
     </div>
 
     <h3 class="architecture-subhead">Tech stack</h3>
-    <div class="tech-chip-row">
-      <span class="tech-chip">PySpark</span>
-      <span class="tech-chip">Delta Lake</span>
-      <span class="tech-chip">Unity Catalog</span>
-      <span class="tech-chip">Databricks SQL Warehouse</span>
-      <span class="tech-chip">Databricks Apps</span>
-      <span class="tech-chip">Databricks Model Serving</span>
-      <span class="tech-chip">Llama 4 Maverick</span>
-      <span class="tech-chip">Databricks Secrets</span>
-      <span class="tech-chip">FastAPI</span>
-      <span class="tech-chip">Leaflet</span>
-      <span class="tech-chip">Vanilla JS</span>
+    <table class="tech-stack-table">
+      <tbody>
+        <tr><th>Backend</th><td>Python 3, FastAPI, Uvicorn</td></tr>
+        <tr><th>Frontend</th><td>Vanilla JavaScript (no build step), HTML/CSS, Leaflet.js</td></tr>
+        <tr><th>AI &mdash; NL query &amp; summary</th><td>Meta Llama 4 Maverick via Databricks Model Serving (OpenAI-compatible API) &mdash; emits a validated filter, never SQL</td></tr>
+        <tr><th>Trust scoring</th><td>Deterministic Spark rules &mdash; never LLM-judged</td></tr>
+        <tr><th>Data warehouse</th><td>Databricks SQL Warehouse (Serverless)</td></tr>
+        <tr><th>Data storage</th><td>Delta Lake on Databricks, Unity Catalog</td></tr>
+        <tr><th>Data pipeline</th><td>Databricks Notebooks (PySpark) &mdash; capability extraction + contradiction rules</td></tr>
+        <tr><th>Deployment</th><td>Databricks Apps</td></tr>
+        <tr><th>Secrets</th><td>Databricks Secret Scopes</td></tr>
+      </tbody>
+    </table>
+
+    <h3 class="architecture-subhead">Process flow &mdash; toggle a track</h3>
+    <div class="flow-toggle-group" id="flow-toggle-group" role="tablist" aria-label="Process flow by track">
+      <button type="button" class="flow-toggle active" data-flow="trust" role="tab" aria-selected="true">Facility Trust Desk</button>
+      <button type="button" class="flow-toggle" data-flow="desert" role="tab" aria-selected="false">Medical Desert Planner</button>
+      <button type="button" class="flow-toggle" data-flow="readiness" role="tab" aria-selected="false">Data Readiness Desk</button>
     </div>
 
-    <h3 class="architecture-subhead">Process flow &mdash; Facility Trust Desk</h3>
-    <ol class="architecture-steps">
+    <ol class="architecture-steps flow-panel" data-flow-panel="trust">
       <li>Planner picks a capability + region, or types a plain-English question</li>
       <li><em>NL path:</em> LLM (Llama 4 Maverick) emits a small validated JSON filter &mdash;
         capability/state/district/trust level &mdash; never SQL; unrecognized values are
@@ -81,6 +107,37 @@
         (all precomputed, just looked up)</li>
       <li>Planner note/override &rarr; written to <code>planner_actions</code>, persists across
         sessions and deployments</li>
+    </ol>
+
+    <ol class="architecture-steps flow-panel hidden" data-flow-panel="desert">
+      <li>Planner picks a capability + optional state</li>
+      <li>One SQL statement: a <code>WITH</code> CTE computes each district's centroid
+        (mean lat/lng of its <code>facility_trust</code> rows), state-scoped when a state
+        filter is set so it stays fast</li>
+      <li><code>LEFT JOIN</code> to <code>district_desert</code> for the chosen capability
+        &mdash; districts with no geolocatable facilities still return (not silently dropped)</li>
+      <li>Map renders one marker per district, colored covered / medical desert / data desert
+        &mdash; a deliberately different hue family from trust-level colors</li>
+      <li>Popup shows facility count behind the aggregate, coverage ratio, and an explicit
+        &ldquo;approximate centroid, not a boundary&rdquo; caveat</li>
+      <li>Honest &ldquo;N of M districts plotted&rdquo; count &mdash; never silently hides
+        what couldn't be mapped</li>
+    </ol>
+
+    <ol class="architecture-steps flow-panel hidden" data-flow-panel="readiness">
+      <li>Summary query computes 4 headline numbers over <code>facility_trust</code>
+        (total, with contradictions, low-trust, with missing evidence)</li>
+      <li>Leverage query scores every facility: contradictions &times; 3 + missing supports
+        &times; 2 + claims a critical capability (ICU/surgery/oncology/trauma/neonatal)
+        &times; 5 + trust-level weight</li>
+      <li>Top 200 by <code>leverage_score</code>, worst first &mdash; not naive low-trust
+        sorting (98.9% of facilities have &ge;1 contradiction, so that alone doesn't
+        discriminate)</li>
+      <li>Reviewer expands a record &rarr; the same cited-evidence view as the Trust Desk</li>
+      <li>Reviewer records a decision: confirmed_issue / looks_fine / needs_field_check /
+        corrected, plus an optional note</li>
+      <li>Decision persists to <code>review_decisions</code>; queue can filter to
+        unreviewed-only on reload &mdash; AI surfaces, a human decides, nothing auto-corrects</li>
     </ol>
 
     <div class="architecture-stats" id="architecture-stats">
